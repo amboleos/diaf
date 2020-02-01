@@ -1,12 +1,13 @@
 import pyaudio
 import wave
 
-RESPEAKER_RATE = 44100 #16000
+
+RESPEAKER_RATE = 16000 #44100 for pc
 RESPEAKER_CHANNELS = 2 
 RESPEAKER_WIDTH = 2
 # run getDeviceInfo.py to get index
-RESPEAKER_INDEX = 0  # refer to input device id
-CHUNK = 4096 #1024
+RESPEAKER_INDEX = 2  # refer to input device id
+CHUNK = 1024 #4096 for pc
 RECORD_SECONDS = 5
 WAVE_OUTPUT_FILENAME = "output.wav"
 

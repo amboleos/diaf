@@ -9,7 +9,7 @@ RESPEAKER_WIDTH = 2
 RESPEAKER_INDEX = 2  # refer to input device id
 CHUNK = 1024
 RECORD_SECONDS = 3
-WAVE_OUTPUT_FILENAME = "output.wav"
+WAVE_OUTPUT_FILENAME = "output_with_diff.wav"
 
 p = pyaudio.PyAudio()
 
