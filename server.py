@@ -1,25 +1,34 @@
-import pyaudio
-import sys
-import socket
+import pyaudio, sys, socket
  
-ip = "192.168.1.241"
- 
-[b][/b]chunk = 1024
-FORMAT = pyaudio.paInt16
-CHANNELS = 1
-RATE = 15000
-timer = 0
- 
+RESPEAKER_RATE = 16000
+RESPEAKER_CHANNELS = 2
+RESPEAKER_WIDTH = 2
+# run getDeviceInfo.py to get index
+RESPEAKER_INDEX = 2  # refer to input device id
+CHUNK = 1024
+RECORD_SECONDS = 3
+WAVE_OUTPUT_FILENAME = "output_with_diff.wav"
+
 p = pyaudio.PyAudio()
+
+stream = p.open(
+            rate=RESPEAKER_RATE,
+            format=p.get_format_from_width(RESPEAKER_WIDTH),
+            channels=RESPEAKER_CHANNELS,
+            input=True,
+            input_device_index=RESPEAKER_INDEX,
+            frames_per_buffer = CHUNK)
+
  
-stream = p.open(format = FORMAT,channels = CHANNELS,rate = RATE,input = True,output = True,frames_per_buffer = chunk)
+server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server_socket.bind((socket.gethostname(),5000))
+server_socket.listen(5)
+
+print "Your IP address is: ", socket.gethostbyname(socket.gethostname())
+print "Server Waiting for client on port 5000"
  
 while 1:
  
-    #Create a socket connection for connecting to the server:
-    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client_socket.connect((str(ip),5000))
- 
-    #Recieve data from the server:
-    data = client_socket.recv(1024)
-    stream.write(data,chunk)
+    client_socket, address = server_socket.accept()
+    client_socket.sendall(stream.read(chunk))
+
