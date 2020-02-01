@@ -23,7 +23,8 @@ stream = p.open(
             format=p.get_format_from_width(RESPEAKER_WIDTH),
             channels=RESPEAKER_CHANNELS,
             input=True,
-            input_device_index=RESPEAKER_INDEX,)
+            input_device_index=RESPEAKER_INDEX,
+            frames_per_buffer=CHUNK)
 
 while 1:
  
