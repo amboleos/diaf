@@ -30,5 +30,5 @@ print "Server Waiting for client on port 5000"
 while 1:
  
     client_socket, address = server_socket.accept()
-    client_socket.sendall(stream.read(chunk))
+    client_socket.sendall(stream.read(CHUNK))
 
