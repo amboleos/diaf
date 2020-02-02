@@ -2,7 +2,7 @@ import pyaudio
 import sys
 import socket
  
-ip = ""
+ip = "192.168.1.39"
  
 RESPEAKER_RATE = 16000
 RESPEAKER_CHANNELS = 2
@@ -22,7 +22,8 @@ stream = p.open(
             rate=RESPEAKER_RATE,
             format=p.get_format_from_width(RESPEAKER_WIDTH),
             channels=RESPEAKER_CHANNELS,
-            input=True,
+            # input=True,
+            output = True,
             input_device_index=RESPEAKER_INDEX,
             frames_per_buffer=CHUNK)
 
@@ -34,4 +35,5 @@ while 1:
  
     #Recieve data from the server:
     data = client_socket.recv(1024)
-    stream.write(data,chunk)
+    print('data :',data)
+    stream.write(data,CHUNK)
