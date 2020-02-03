@@ -19,7 +19,7 @@ INPUT = True
 RESPEAKER_WIDTH = 2
 
 # Socket Initialization
-HOST = '192.168.1.43'
+HOST = '192.168.1.50'
 PORT = 65000
 SIZE = 1024
 
