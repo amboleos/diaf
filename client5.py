@@ -48,7 +48,7 @@ async def white(status):
 p = pyaudio.PyAudio()
 
 async def echo_server(reader, writer):
-    print ("welcome",writer)
+    print ("\nwelcome\n",writer._transport.get_extra_info('peername'))
 
     stream = p.open(format=p.get_format_from_width(RESPEAKER_WIDTH),
                     channels=CHANNELS,
@@ -66,10 +66,15 @@ async def echo_server(reader, writer):
 
     stream.stop_stream()
     stream.close()
+    await asyncio.sleep(0)
+
     # p.terminate()
 
 async def send_sound():
+    print("we are in")
+     
     while True:
+        await asyncio.sleep(0)
 
         if not GPIO.input(BUTTON):
 
@@ -109,8 +114,20 @@ async def send_sound():
     return None
 
 async def main(host, port):
-    # result = await send_sound()
+    print ("start")
     server = await asyncio.start_server(echo_server, host, port)
-    await server.serve_forever()
+
+
+    loop = asyncio.get_event_loop()
+    print (loop)
+    task = asyncio.create_task(send_sound())
+
+    print ("loop,future:",loop,task)
+
+    async with server:
+        await asyncio.gather(
+            server.serve_forever(), task )
+    # await server.serve_forever()
+
 
 asyncio.run(main(HOST1, PORT))
