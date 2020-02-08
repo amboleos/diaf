@@ -30,6 +30,7 @@ HOST2 = '192.168.1.40'
 PORT = 65000
 BACKLOG = 5
 SIZE = 1024
+listening = False
 
 async def rainbow(status):
     while True :
@@ -48,35 +49,49 @@ async def white(status):
 p = pyaudio.PyAudio()
 
 async def echo_server(reader, writer):
-    print ("\nwelcome\n",writer._transport.get_extra_info('peername'))
+    global listening,p
+    try:
+        listening = True
+        print ("listening:",listening)
 
-    stream = p.open(format=p.get_format_from_width(RESPEAKER_WIDTH),
-                    channels=CHANNELS,
-                    rate=RATE,
-                    output=OUTPUT)
+        print ("\nwelcome\n",writer._transport.get_extra_info('peername'))
 
-    while True:
-        data = await reader.read(CHUNK)  # Max number of bytes to read
-        # data = conn.recv(SIZE)
+        stream = p.open(format=p.get_format_from_width(RESPEAKER_WIDTH),
+                        channels=CHANNELS,
+                        rate=RATE,
+                        output=OUTPUT)
 
-        if not data:
-            break
-        stream.write(data)
-        # await writer.drain()  # Flow control, see later
+        while True:
+            data = await reader.read(CHUNK)  # Max number of bytes to read
+            # data = conn.recv(SIZE)
 
-    stream.stop_stream()
-    stream.close()
-    await asyncio.sleep(0)
+            if not data:
+                break
+            stream.write(data)
+            # await writer.drain()  # Flow control, see later
+
+        stream.stop_stream()
+        stream.close()
+        listening =False
+        print ("listening:",listening)
+        await asyncio.sleep(0)
+    except Exception as e:
+        print ("server:",e)
+    finally:
+        pass
 
     # p.terminate()
 
 async def send_sound():
     print("we are in")
+    global listening
      
     while True:
+        
         await asyncio.sleep(0)
 
-        if not GPIO.input(BUTTON):
+        if not GPIO.input(BUTTON) and not listening:
+            print ("listening:",listening)
 
             
             stream = p.open(format=p.get_format_from_width(RESPEAKER_WIDTH),
@@ -91,26 +106,53 @@ async def send_sound():
 
             reader, writer = await asyncio.open_connection(HOST2, PORT)
 
-            print('Three Seconds of white light')
+            if(listening):
+                print("Listening değil Algılandı!! Kapanıyor")
+
+                writer.close()
+                await writer.wait_closed()
+
+                stream.stop_stream()
+                stream.close()
+                # p.terminate()
+                print("Kapandı")
+            else:
+
+                print('Three Seconds of white light')
+
+                try:    
+                    while( not GPIO.input(BUTTON) and not listening ):
+                        data = stream.read(CHUNK)
+                        writer.write(data)
+                        await writer.drain()
+                        if(listening):
+                            break
+                    
+                    if( not listening):
+                        for i in range(5):
+                            data = stream.read(CHUNK)
+                            writer.write(data)
+                            await writer.drain()
+                            if(listening):
+                                break
+
+                    writer.close()
+                    await writer.wait_closed()
+
+                    stream.stop_stream()
+                    stream.close()
+                    # p.terminate()
+                    print("terminated")
+                except Exception as e: 
+                    print ("send_sound:",e)
+                    writer.close()
+                    await writer.wait_closed()
+                    # p.terminate()
+                    # p = pyaudio.PyAudio()
             
-            while( not GPIO.input(BUTTON)  ):
-                data = stream.read(CHUNK)
-                writer.write(data)
-                await writer.drain()
+
+        
             
-            for i in range(5):
-                data = stream.read(CHUNK)
-                writer.write(data)
-                await writer.drain()
-
-            writer.close()
-            await writer.wait_closed()
-
-            stream.stop_stream()
-            stream.close()
-            # p.terminate()
-            print("terminated")
-
     return None
 
 async def main(host, port):
