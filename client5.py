@@ -104,8 +104,13 @@ async def send_sound():
             # connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             # connection.connect((HOST, PORT))
 
-            reader, writer = await asyncio.open_connection(HOST2, PORT)
-
+            reader =[]
+            writer =[]
+            try:
+                reader, writer = await asyncio.open_connection(HOST2, PORT)
+            except Exception as e:
+                print(e)
+        
             if(listening):
                 print("Listening değil Algılandı!! Kapanıyor")
 
