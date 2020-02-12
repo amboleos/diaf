@@ -10,3 +10,6 @@ sudo apt-get install portaudio19-dev python-pyaudio python3-pyaudio
 
 For filtering 
 https://healthyalgorithms.com/2013/08/22/dsp-in-python-active-noise-reduction-with-pyaudio/
+
+Raspberry Hotspot config
+https://www.raspberrypi.org/documentation/configuration/wireless/access-point.md
