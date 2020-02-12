@@ -4,7 +4,6 @@ import pyaudio
 import asyncio
 import numpy as np
 import time
-import sys
 
 import RPi.GPIO as GPIO
 from apa102_pi.colorschemes import colorschemes
@@ -23,16 +22,16 @@ RESPEAKER_WIDTH = 2
 NUM_LED = 430
 INPUT = True
 
+
+
 # Server configuration
 HOST1 = '192.168.1.50'
 HOST2 = '192.168.1.40'
-PORT1 = 65000
-PORT2 = 65000
 
+
+PORT = 65000
 BACKLOG = 5
 SIZE = 1024
-
-
 
 
 async def listen(stream):
@@ -44,65 +43,32 @@ async def listen(stream):
             while not(GPIO.input(BUTTON)):
                 await asyncio.sleep(1)  
             stream.stop_stream()
-            print("----------")
+            print("XXX listening")
 
 async def talk(stream):
     while True:
         await asyncio.sleep(0.5)
         
-        print("\t\t\t talking")
+        print("talking", time.monotonic(),stream.is_active())
         stream.start_stream()
         while stream.is_active():
             await asyncio.sleep(0.5)
         stream.stop_stream()
-        print("\t\t\t ----------")
-
-
-async def input_server(reader,writer,frames):
-    data = await reader.read(CHUNK)
-    frames.append(data)
-    addr = writer.get_extra_info('peername')
-    print(f"Received message from {addr!r}")
-
-async def output_client(frames):
-    try:
-        await asyncio.sleep(5)
-
-        while True:
-
-            await asyncio.sleep(0)
-
-            if(len(frames)):
-                reader, writer = await asyncio.open_connection(HOST2, PORT2)
-
-            while len(frames):
-                writer.write(frames.popleft())
-                await writer.drain()
-
-            writer.close()
-            await writer.wait_closed()
-
-    except Exception as e:
-        print(e)
-    
-
+        print("XXX talking", time.monotonic())
 
 
 async def main():
     p = pyaudio.PyAudio()
-
-    input_frames = deque()
-    output_frames = deque()
+    frames = deque()
     
     def input_callback(in_data, frame_count, time_info, status):
-        print(f"*-* input_cb *-* {len(input_frames)}")
-        input_frames.append(in_data)
+        print(f"*-* input_cb *-* {len(frames)}")
+        frames.append(in_data)
         return (in_data, pyaudio.paContinue)
-
     def output_callback(in_data, frame_count, time_info, status):
-        print(f"\t\t\t *-* output_cb *-* {len(output_frames)}")
-        if(len(output_frames)):
-            data = output_frames.popleft()
+        print(f"\t\t\t *-* output_cb *-* {len(frames)}")
+        if(len(frames)):
+            data = frames.popleft()
         else: 
             data= bytes()
         return (data, pyaudio.paContinue)
@@ -114,7 +80,7 @@ async def main():
         input_device_index=2,
         frames_per_buffer=CHUNK,stream_callback=input_callback)
     input_stream.stop_stream()
-    input_task = asyncio.create_task(listen(input_stream))
+    listen_task = asyncio.create_task(listen(input_stream))
 
     output_stream = p.open(format=p.get_format_from_width(RESPEAKER_WIDTH),
                 channels=CHANNELS,
@@ -123,17 +89,8 @@ async def main():
     output_stream.stop_stream()
     output_task = asyncio.create_task(talk(output_stream))
 
-
-    server = await asyncio.start_server(lambda r,w: input_server(r,w,output_frames), HOST1, PORT1)
-    client = asyncio.create_task(output_client(input_frames))
-
-    async with server:
-        await asyncio.gather(
-            server.serve_forever(),
-            client,
-            input_task, 
-            output_task,
-            )
+    await asyncio.gather(
+        listen_task, output_task)
 
     print("üsteki bitti")
     await asyncio.sleep(10)
