@@ -24,8 +24,8 @@ NUM_LED = 430
 INPUT = True
 
 # Server configuration
-HOST1 = '192.168.1.50'
-HOST2 = '192.168.1.40'
+HOST1 = '192.168.1.40'
+HOST2 = '192.168.1.50'
 PORT1 = 65000
 PORT2 = 65000
 
