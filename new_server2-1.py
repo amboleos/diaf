@@ -5,6 +5,8 @@ import asyncio
 import numpy as np
 import time
 
+from async_runcolorcycle import *
+
 import RPi.GPIO as GPIO
 from apa102_pi.colorschemes import colorschemes
 
@@ -34,7 +36,16 @@ PORT = 65000
 BACKLOG = 5
 SIZE = 1024
 
-
+idle = Solid_Async (num_led=NUM_LED, pause_value=3,
+                              num_steps_per_cycle=1, num_cycles=1)
+error = RoundAndRound_Async (num_led=NUM_LED, pause_value=0,
+                                      num_steps_per_cycle=NUM_LED, num_cycles=2)
+MY_CYCLE3 = StrandTest_Async (num_led=NUM_LED, pause_value=0,
+                                   num_steps_per_cycle=NUM_LED, num_cycles=3)
+loading = Rainbow_Async (num_led=NUM_LED, pause_value=0,
+                                num_steps_per_cycle=255, num_cycles=1)
+connecting = TheaterChase_Async (num_led=NUM_LED, pause_value=0.04,
+                                     num_steps_per_cycle=35, num_cycles=5)
 
 async def listen(input_stream):
     while True:
@@ -75,6 +86,7 @@ async def talk(reader,writer,output_stream):
 
 
 async def main():
+    
     p = pyaudio.PyAudio()
     # frames = deque()
     
@@ -110,8 +122,17 @@ async def main():
 
     # listen_task = asyncio.create_task(listen(input_stream))
     # output_task = asyncio.create_task(talk(input_stream,output_stream))
+    try:
+        server = await asyncio.start_server(lambda r,w: talk(r,w,output_stream), HOST1, PORT1)
+    except:
+        while True:
+            await error.start()
+            try:
+                server = await asyncio.start_server(lambda r,w: talk(r,w,output_stream), HOST1, PORT1) 
+                break
+            except:
+                print("connection not found")
 
-    server = await asyncio.start_server(lambda r,w: talk(r,w,output_stream), HOST1, PORT1)
     client = asyncio.create_task(listen(input_stream))
 
     async with server:
