@@ -59,37 +59,38 @@ class Diafon:
         self.button = 17
 
         GPIO.setmode(GPIO.BCM)
-        GPIO.setup(BUTTON, GPIO.IN)
+        GPIO.setup(self.button , GPIO.IN)
 
         self.status = "idle"
 
 
-    async def ligth_status():
+    async def ligth_status(self):
 
         while True:
-            await asyncio.sleep(0)
+            await asyncio.sleep(0.1)
+            print("ligth_status" , self.status, self.status == "error")
 
             if self.status is "idle":
-                Solid_Async (num_led=NUM_LED, pause_value=3,
-                            num_steps_per_cycle=1, num_cycles=1)  
+                await Solid_Async (num_led=NUM_LED, pause_value=3,
+                            num_steps_per_cycle=1, num_cycles=1).start()  
 
             if self.status is "error":
-                RoundAndRound_Async (num_led=NUM_LED, pause_value=0,
-                            num_steps_per_cycle=NUM_LED, num_cycles=2)
+                await RoundAndRound_Async (num_led=NUM_LED, pause_value=0,
+                            num_steps_per_cycle=NUM_LED, num_cycles=2).start()
             
             if self.status is "MY_CYCLE3":
-                StrandTest_Async (num_led=NUM_LED, pause_value=0,
-                                   num_steps_per_cycle=NUM_LED, num_cycles=3)
+                await StrandTest_Async (num_led=NUM_LED, pause_value=0,
+                                   num_steps_per_cycle=NUM_LED, num_cycles=3).start()
             
             if self.status is "loading":
-                Rainbow_Async (num_led=NUM_LED, pause_value=0,
-                                num_steps_per_cycle=255, num_cycles=1)
+                await Rainbow_Async (num_led=NUM_LED, pause_value=0,
+                                num_steps_per_cycle=255, num_cycles=1).start()
             
-            if status is "connecting":
-                TheaterChase_Async (num_led=NUM_LED, pause_value=0.04,
-                                     num_steps_per_cycle=35, num_cycles=5)
+            if self.status is "connecting":
+                await TheaterChase_Async (num_led=NUM_LED, pause_value=0.04,
+                                     num_steps_per_cycle=35, num_cycles=5).start()
 
-    async def listen(input_stream):
+    async def listen(self,input_stream):
         while True:
             await asyncio.sleep(0)
             if not(GPIO.input(self.button)):
@@ -115,7 +116,7 @@ class Diafon:
                 except Exception as e:
                     print (e)
 
-    async def talk(reader,writer,output_stream):
+    async def talk(self,reader,writer,output_stream):
             await asyncio.sleep(0)
             print("talking")
             output_stream.start_stream()
@@ -126,7 +127,7 @@ class Diafon:
             output_stream.stop_stream()
             print("XXX talking", time.monotonic())
 
-    async def main():
+    async def main(self):
         
         p = pyaudio.PyAudio()
 
@@ -151,22 +152,24 @@ class Diafon:
         # listen_task = asyncio.create_task(listen(input_stream))
         # output_task = asyncio.create_task(talk(input_stream,output_stream))
         try:
-            server = await asyncio.start_server(lambda r,w: talk(r,w,output_stream), HOST1, PORT)
+            server = await asyncio.start_server(lambda r,w: self.talk(r,w,output_stream), HOST1, PORT)
         except:
             while True:
-                await error.start()
+                await RoundAndRound_Async (num_led=NUM_LED, pause_value=0,
+                            num_steps_per_cycle=NUM_LED, num_cycles=2).start()
                 try:
-                    server = await asyncio.start_server(lambda r,w: talk(r,w,output_stream), HOST1, PORT) 
+                    server = await asyncio.start_server(lambda r,w: self.talk(r,w,output_stream), HOST1, PORT) 
                     break
                 except:
                     print("connection not found")
 
-        client = asyncio.create_task(listen(input_stream))
+        client = asyncio.create_task(self.listen(input_stream))
 
         async with server:
             await asyncio.gather(
                 server.serve_forever(),
                 client,
+                ligth_status,
                 )
 
         print("üsteki bitti")
@@ -177,7 +180,7 @@ class Diafon:
         
 
 
-diafon=Diafon( host1= "192.168.1.50",host2='192.168.1.150', )
+diafon=Diafon( host1= "192.168.1.212",host2='192.168.1.150', port=65000 )
 asyncio.run(diafon.main())
 
 
