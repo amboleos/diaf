@@ -96,7 +96,7 @@ class Diafon:
             if not(GPIO.input(self.button)):
                 print("listening")
                 try:
-                    reader, writer = await asyncio.open_connection(self.host1, self.port)
+                    reader, writer = await asyncio.open_connection(self.host2, self.port)
 
                     input_stream.start_stream()  
 
@@ -152,13 +152,13 @@ class Diafon:
         # listen_task = asyncio.create_task(listen(input_stream))
         # output_task = asyncio.create_task(talk(input_stream,output_stream))
         try:
-            server = await asyncio.start_server(lambda r,w: self.talk(r,w,output_stream), HOST1, PORT)
+            server = await asyncio.start_server(lambda r,w: self.talk(r,w,output_stream), self.host1, self.port)
         except:
             while True:
                 await RoundAndRound_Async (num_led=NUM_LED, pause_value=0,
                             num_steps_per_cycle=NUM_LED, num_cycles=2).start()
                 try:
-                    server = await asyncio.start_server(lambda r,w: self.talk(r,w,output_stream), HOST1, PORT) 
+                    server = await asyncio.start_server(lambda r,w: self.talk(r,w,output_stream), self.host1, self.port) 
                     break
                 except:
                     print("connection not found")
