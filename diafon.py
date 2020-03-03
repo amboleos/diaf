@@ -114,6 +114,7 @@ class Diafon:
                     input_stream.stop_stream()
                     print("XXX listening")
                 except Exception as e:
+                    self.status = "error"
                     print (e)
 
     async def talk(self,reader,writer,output_stream):
@@ -169,7 +170,7 @@ class Diafon:
             await asyncio.gather(
                 server.serve_forever(),
                 client,
-                ligth_status,
+                self.ligth_status(),
                 )
 
         print("üsteki bitti")
