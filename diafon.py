@@ -61,17 +61,17 @@ class Diafon:
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(self.button , GPIO.IN)
 
-        self.status = "idle"
+        self.status = "green"
 
 
     async def ligth_status(self):
 
         while True:
-            await asyncio.sleep(0.1)
+            # await asyncio.sleep(0.1)
             print("ligth_status" , self.status, self.status == "error")
 
             if self.status is "idle":
-                await Solid_Async (num_led=NUM_LED, pause_value=3,
+                await Solid_Async (num_led=NUM_LED, pause_value=0.1,
                             num_steps_per_cycle=1, num_cycles=1).start()  
 
             if self.status is "error":
@@ -88,7 +88,12 @@ class Diafon:
             
             if self.status is "connecting":
                 await TheaterChase_Async (num_led=NUM_LED, pause_value=0.04,
-                                     num_steps_per_cycle=35, num_cycles=5).start()
+                                     num_steps_per_cycle=35, num_cycles=1).start()
+
+            if self.status is "green":
+                await Solid_Green_Async (num_led=NUM_LED, pause_value=0.1,
+                            num_steps_per_cycle=1, num_cycles=10).start()
+              
 
     async def listen(self,input_stream):
         while True:
@@ -96,6 +101,10 @@ class Diafon:
             if not(GPIO.input(self.button)):
                 print("listening")
                 try:
+                    self.status = "green"
+                    await Solid_Green_Async (num_led=NUM_LED, pause_value=0.01,
+                            num_steps_per_cycle=1, num_cycles=1).start()
+                            
                     reader, writer = await asyncio.open_connection(self.host2, self.port)
 
                     input_stream.start_stream()  
@@ -120,13 +129,21 @@ class Diafon:
     async def talk(self,reader,writer,output_stream):
             await asyncio.sleep(0)
             print("talking")
+            self.status = "connecting"
             output_stream.start_stream()
+            x=0
             while output_stream.is_active():
                 data = await reader.read(CHUNK)
                 output_stream.write(data)
                 await asyncio.sleep(0)
-            output_stream.stop_stream()
+                x +=1
+                print(x,len(data))
+                if len(data) == 0:
+                    break
             print("XXX talking", time.monotonic())
+            self.status = "green"
+            output_stream.stop_stream()
+
 
     async def main(self):
         
@@ -149,6 +166,7 @@ class Diafon:
                     #stream_callback=output_callback
                     )
         output_stream.stop_stream()
+        print ("output_stream.is_active():",output_stream.is_active())
 
         # listen_task = asyncio.create_task(listen(input_stream))
         # output_task = asyncio.create_task(talk(input_stream,output_stream))

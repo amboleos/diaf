@@ -182,7 +182,7 @@ class TheaterChase_Async (colorschemes.TheaterChase):
                                   global_brightness=self.global_brightness,
                                   mosi=self.mosi, sclk=self.sclk,
                                   order=self.order)  # Initialize the strip
-            strip.clear_strip()
+            # strip.clear_strip()
             self.init(strip, self.num_led)  # Call the subclasses init method
             strip.show()
             current_cycle = 0
@@ -199,40 +199,26 @@ class TheaterChase_Async (colorschemes.TheaterChase):
                     if current_cycle >= self.num_cycles:
                         break
             # Finished, cleanup everything
-            self.cleanup(strip)
+            # self.cleanup(strip)
 
         except KeyboardInterrupt:  # Ctrl-C can halt the light program
             print('Interrupted...')
             if self.cleanup is not None:
                 self.cleanup(strip)
 
-class CT_Async( colorcycletemplate.ColorCycleTemplate ):
-    """Runs a simple strand test (9 LEDs wander through the strip)."""
+class Solid_Green_Async (colorschemes.Solid):
 
-    color = None
-
-    def init(self, strip, num_led):
-        self.color = 0x000000  # Initialize with black
-
-    def update(self, strip, num_led, num_steps_per_cycle, current_step,
-               current_cycle):
-        # One cycle = The 9 Test-LEDs wander through numStepsPerCycle LEDs.
-        if current_step == 0:
-            self.color >>= 8  # Red->green->blue->black
-        if self.color == 0:
-            self.color = 0xFF0000  # If black, reset to red
-        bloblen = 9
-        if num_led - 1 < bloblen:
-            bloblen = num_led - 3
-        if num_led <= 0:
-            bloblen = 1
-            # The head pixel that will be turned on in this cycle
-        head = (current_step + bloblen) % num_steps_per_cycle
-        tail = current_step  # The tail pixel that will be turned off
-        strip.set_pixel_rgb(head, self.color)  # Paint head
-        strip.set_pixel_rgb(tail, 0)  # Clear tail
-
-        return 1  # Repaint is necessary
+    def update(self, strip, num_led, num_steps_per_cycle, current_step, current_cycle):
+        stripcolour = 0xFF00FF
+        if current_step == 1:
+            stripcolour = 0xFF0000
+        if current_step == 2:
+            stripcolour = 0x00FF00
+        if current_step == 3:
+            stripcolour = 0x0000FF
+        for led in range(0, num_led):
+            strip.set_pixel_rgb(led, stripcolour, 5)  # Paint 5% white
+        return 1
 
     async def start(self):
         """This method does the actual work."""
@@ -265,6 +251,8 @@ class CT_Async( colorcycletemplate.ColorCycleTemplate ):
             print('Interrupted...')
             if self.cleanup is not None:
                 self.cleanup(strip)
+
+
 
 
 async def print_some():

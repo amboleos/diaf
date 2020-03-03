@@ -27,7 +27,7 @@ INPUT = True
 
 
 # Server configuration
-HOST1 = '192.168.1.50'
+HOST1 = '192.168.1.212'
 HOST2 = '192.168.1.150'
 PORT1 = 65000
 PORT2 = 65000
